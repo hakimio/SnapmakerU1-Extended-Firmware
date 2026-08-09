@@ -1,0 +1,73 @@
+#!/bin/sh
+#
+# Install ace mod
+#
+
+FALLBACK_DIR="/usr/local/share/ace_device"
+SOURCE_DIR="/oem/printer_data/ace_device"
+CFG_FILE="/oem/printer_data/config/extended/mods/ace_device.cfg"
+PATCH_NAME="patch.list"
+VERSION_NAME="version"
+
+case "$1" in
+    start|"")
+	
+        if [ ! -f "$CFG_FILE" ]; then
+            exit 0
+        fi
+
+        if [ -d "$SOURCE_DIR" ]; then
+            F_VER_FILE="$FALLBACK_DIR/$VERSION_NAME"
+            S_VER_FILE="$SOURCE_DIR/$VERSION_NAME"
+
+            if [ ! -f "$S_VER_FILE" ]; then
+                rm -rf "$SOURCE_DIR"
+            
+            elif [ -f "$F_VER_FILE" ]; then
+                F_VER=$(cat "$F_VER_FILE" | tr -d '\r')
+                S_VER=$(cat "$S_VER_FILE" | tr -d '\r')
+
+                if [ "$F_VER" -gt "$S_VER" ]; then
+                    rm -rf "$SOURCE_DIR"
+                fi
+            fi
+        fi
+
+        if [ -f "$SOURCE_DIR/$PATCH_NAME" ]; then
+            SELECTED_PATCH_FILE="$SOURCE_DIR/$PATCH_NAME"
+        elif [ -f "$FALLBACK_DIR/$PATCH_NAME" ]; then
+            SELECTED_PATCH_FILE="$FALLBACK_DIR/$PATCH_NAME"
+        else
+            exit 0
+        fi
+
+        while IFS=',' read -r FILE VERSION TGT_PATH || [ -n "$FILE" ]; do
+            FILE=$(echo "$FILE" | tr -d '\r' | xargs)
+            TGT_PATH=$(echo "$TGT_PATH" | tr -d '\r' | xargs)
+            
+            [ -z "$FILE" ] || [ -z "$TGT_PATH" ] && continue
+           
+            SRC_FILE=""
+
+            if [ -f "$SOURCE_DIR/$FILE" ]; then
+                SRC_FILE="$SOURCE_DIR/$FILE"
+            elif [ -f "$FALLBACK_DIR/$FILE" ]; then
+                SRC_FILE="$FALLBACK_DIR/$FILE"
+            fi
+
+            if [ -n "$SRC_FILE" ]; then
+                mkdir -p "$TGT_PATH"
+                TGT_FILE="$TGT_PATH/$FILE"
+                cp -f "$SRC_FILE" "$TGT_FILE"
+                chown lava:lava "$TGT_FILE"
+                chmod 644 "$TGT_FILE"
+            fi
+        done < "$SELECTED_PATCH_FILE"
+        ;;
+    stop)
+        ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

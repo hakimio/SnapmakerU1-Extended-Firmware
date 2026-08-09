@@ -1,0 +1,16 @@
+--- rootfs.original/home/lava/origin_printer_data/config/printer.cfg	2026-03-23 11:01:22.000000000 +0800
++++ rootfs/home/lava/origin_printer_data/config/printer.cfg	2026-04-02 05:11:02.943289300 +0800
+@@ -38,8 +38,13 @@
+ [timelapse]
+ frame_rate: 24
+ 
+ #################################################################
++###    mod includes
++#################################################################
++[include extended/mods/*.cfg]
++
++#################################################################
+ ###       NFC configuration
+ #################################################################
+ [fm175xx_reader]
+ soc_spi_bus: 2
